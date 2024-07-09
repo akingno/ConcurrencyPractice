@@ -1,27 +1,12 @@
-#include <iostream>
-#include <thread>
-#include <vector>
+
+#include "Globals.h"
+#include "MyTask.h"
 #include <memory>
 #include <queue>
-#include <functional>
+#include <thread>
+#include <vector>
 
-const int NUM_THREADS = 4;
 using namespace std;
-using Task = function<int(std::pair<int, int>)>;
-
-/*
- * 封装Task，令其可以比较
- *
- * */
-class TaskWithPriority{
-    Task task;
-    int priority;
-
-    bool operator<(const TaskWithPriority& other) const{
-      return priority < other.priority;
-    }
-};
-
 
 
 
@@ -30,7 +15,7 @@ auto SplitRange(const int low,const int high) {
   /*
    * 切割成 2 * threads 份
    * */
-  int subRangeLength = ((high - low) + 1) / (2 * NUM_THREADS);
+  int subRangeLength = ((high - low) + 1) / (2 * Globals::NUM_THREADS);
   auto subRange = make_shared<vector<pair<int,int>>>();
   for(int i = low; i < high;){
     if(i + subRangeLength <= high){
@@ -42,6 +27,12 @@ auto SplitRange(const int low,const int high) {
       break;
     }
   }
+  /*
+   * Split End
+   * */
+  /*
+   * TODO:DELETE PRINT
+   * */
   for(const auto & iter : *subRange){
     cout<<iter.first<<","<<iter.second<<endl;
   }
@@ -74,7 +65,14 @@ tuple<int, int> LoadInput(){
 }
 
 /*
- * 求两个数中间的素数之和
+ * 用多线程求两个数中间的素数之和
+ *
+ * TODO: 1. 实现主线程读取任务切割任务和输出结果。
+ *        2.实现线程池和线程的初始化，对线程的通知，和销毁线程。
+ *        3.实现任务队列，实现主线程把任务放入任务队列，和通知线程池。
+ *        4.实现线程池的任务分配（线程通知线程池：
+ *          每个线程在完成任务后，会通知线程池进行任务分配。
+ *          线程池会从任务队列中取出新任务并分配给通知的线程。）
  *
  * */
 int main() {

@@ -77,6 +77,7 @@ tuple<int, int> LoadInput(){
  *
  * */
 int main() {
+  atomic<int> Sum =0;
   auto [low, high] = LoadInput();
 
   /*
@@ -84,31 +85,25 @@ int main() {
    *
    * */
   auto subRange = SplitRange(low, high);
-  /*
-   *
-   * 存放素数的数组
-   *
-   * */
-  vector<int> primes;
 
-  TaskFunction taskFunction = [](pair<int,int> range) -> int{
-    int sum;
-    for (int i = range.first; i < range.second; ++i){
+
+  TaskFunction taskFunction = [](pair<int,int> range,atomic<int>& Sum) -> int{
+    int sum = 0;
+    for (int i = range.first; i <= range.second; ++i){
       if(Is_prime(i)){
+        cout<<" "<<i;
         sum+=i;
       }
     }
+    Sum += sum;
     return sum;
   };
 
-  auto threadPool = make_unique<ThreadPool>();
+  auto threadPool = make_unique<ThreadPool>(Globals::NUM_THREADS);
   for(auto& subrange : *subRange) {
-    threadPool->EnqueueTask(Task(std::move(taskFunction),std::move(subrange),0));
+    threadPool->EnqueueTask(Task(taskFunction,std::move(subrange),0,Sum));
   }
-
-
-
-
+  cout<<"Total:"<<Sum<<endl;
 
 
 

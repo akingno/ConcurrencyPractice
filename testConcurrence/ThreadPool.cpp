@@ -3,6 +3,7 @@
 //
 
 #include "ThreadPool.h"
+#include <mutex>
 using namespace std;
 ThreadPool::ThreadPool(int num_threads) {
   b_stopFlag = false;
@@ -16,22 +17,7 @@ ThreadPool::~ThreadPool() {
    * */
   Stop();
 }
-void ThreadPool::NotifiedByTaskqueue() {
-}
-void ThreadPool::DispatchTask() {
-  /*
-   * 寻找是否有空的Thread
-   * 如果有，Notify it(让其自行解锁)
-   *
-   *
-   * */
-  for(const auto& threadStruct : m_threads){
-    if(threadStruct->b_isInLeisure){
-      threadStruct->Notify();
-      return;
-    }
-  }
-}
+
 void ThreadPool::Stop() {
   /*
    *
@@ -45,13 +31,15 @@ void ThreadPool::Stop() {
     b_stopFlag = true;
   }
 
-  con_condition.notify_all();
+  con_Var.notify_all();
 
-  for(auto& threadStruct : m_threads){
-    if(threadStruct->b_isInLeisure){
-      threadStruct->Stop();
+  for(auto& thd:m_threads){
+    if(thd.joinable()){
+      thd.join();
     }
   }
+
+  m_threads.clear();
 }
 
 void ThreadPool::EnqueueTask(Task&& task) {
@@ -64,26 +52,26 @@ void ThreadPool::EnqueueTask(Task&& task) {
   {
     std::lock_guard<std::mutex> lock(mtx_queueMutex);
     pq_taskPriorityQueue.push(std::move(task));
+    cout<<"taskPQ size:"<<pq_taskPriorityQueue.size()<<endl;
   }
-  DispatchTask();
+  con_Var.notify_one();
+
 }
 
-void ThreadPool::AddingThreads(int num_threads) {
-  for (int i = 0; i < num_threads; ++i){
-    m_threads.emplace_back(make_shared<ThreadStruct>(shared_from_this())); //todo：此处调用ThreadStruct构造函数但还未实现
-  }
-  for(auto& thread_struct : m_threads){
-    thread_struct->m_thread = std::thread(&ThreadStruct::Run, thread_struct);
-  }
-}
+
 
 void ThreadPool::Init(int num_threads) {
   /*
    * 初始化，Adding threads
    *
    * */
-  AddingThreads(num_threads);
+  for(int i = 0; i < num_threads; ++i){
+    m_threads.emplace_back(&ThreadPool::Run,this);
+  }
+
+  //AddingThreads(num_threads);
 }
+
 bool ThreadPool::IsFull() const {
   /*
    *
@@ -91,21 +79,11 @@ bool ThreadPool::IsFull() const {
    * TODO:其实我感觉这个函数useless
    *
    * */
-  for(auto& each_thread : m_threads){
-    if(each_thread->b_isInLeisure){
-      return false;
-    }
-  }
   return true;
 }
 
 
-
-ThreadPool::ThreadStruct::ThreadStruct(shared_ptr<ThreadPool> pool) :m_threadPool(pool){
-}
-ThreadPool::ThreadStruct::~ThreadStruct() {
-}
-void ThreadPool::ThreadStruct::Run() {
+void ThreadPool::Run() {
   while(true){
     /*
      * 1. con_var.wait()
@@ -115,46 +93,28 @@ void ThreadPool::ThreadStruct::Run() {
      * */
     Task task;
     {
-      unique_lock<mutex> lock(mtx_conditionMutex);
+      unique_lock<mutex> lock(mtx_queueMutex);
 
       con_Var.wait(lock,[this](){
-        auto poolPtr = m_threadPool.lock();
-        return (!poolPtr|| !poolPtr->pq_taskPriorityQueue.empty() || poolPtr->b_stopFlag);
+        return (!pq_taskPriorityQueue.empty() || b_stopFlag);
       });
 
-      auto poolPtr = m_threadPool.lock();
 
-      if(!poolPtr){
+      if(pq_taskPriorityQueue.empty()&& b_stopFlag){
         return;
       }
-      if(poolPtr->pq_taskPriorityQueue.empty()&& poolPtr->b_stopFlag){
-        return;
-      }
-      if (!poolPtr->pq_taskPriorityQueue.empty()) {
-        auto taskWithPriority = poolPtr->pq_taskPriorityQueue.top();
-        poolPtr->pq_taskPriorityQueue.pop();
+      if (!pq_taskPriorityQueue.empty()) {
+        task = pq_taskPriorityQueue.top();
+        pq_taskPriorityQueue.pop();
       } else {
         continue;
       }
     }
+
     auto result = task.execute();
-    cout<<result<<endl;
-    b_isInLeisure = true;
-    Notify();
 
+    cout<<"Result:"<<result<<endl;
 
   }
 }
-void ThreadPool::ThreadStruct::Stop() {
-  if(m_thread.joinable()){
-    m_thread.join();
-  }
-}
-void ThreadPool::ThreadStruct::Notify() {
-  /*
-   *
-   * 解一个锁
-   *
-   * */
-  con_Var.notify_one();
-}
+

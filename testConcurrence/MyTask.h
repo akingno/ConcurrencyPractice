@@ -9,7 +9,7 @@
 #include <iostream>
 
 
-using TaskFunction = std::function<void(std::pair<int, int>,std::atomic<int>&)>;
+using TaskFunction = std::function<void(std::pair<int, int>,std::atomic<long long>&)>;
 
 using Range = std::pair<int,int>;
 
@@ -17,11 +17,11 @@ class Task{
   TaskFunction taskfunction;
   std::pair<int,int> m_range;
   int i_priority;
-  std::atomic<int>& m_totalSum;
+  std::atomic<long long>& m_totalSum;
  public:
 
   Task() = delete;
-  Task(const TaskFunction taskfun,Range &&range,int priority, std::atomic<int>& totalSum) :taskfunction(taskfun),
+  Task(const TaskFunction taskfun,Range &&range,int priority, std::atomic<long long>& totalSum) :taskfunction(taskfun),
                                                                                         m_range(range),
                                                                                         i_priority(priority),
                                                                                         m_totalSum(totalSum){}

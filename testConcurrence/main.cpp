@@ -70,7 +70,7 @@ tuple<int, int> LoadInput(){
  * */
 int main() {
 
-  atomic<int> Sum =0;
+  atomic<long long> Sum =0;
   auto [low, high] = LoadInput();
   auto start = chrono::system_clock::now();
 
@@ -87,9 +87,9 @@ int main() {
    * 当前taskFunction只能是
    *
    * */
-  TaskFunction taskFunction = [](pair<int,int> range,atomic<int>& Sum){
+  TaskFunction taskFunction = [](pair<int,int> range,atomic<long long>& Sum){
 
-    int sum = 0;
+    long long sum = 0;
     for (int i = range.first; i <= range.second; ++i){
       if(Is_prime(i)){
         //cout<<" "<<i;

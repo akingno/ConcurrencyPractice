@@ -39,7 +39,7 @@ void ThreadPool::Stop() {
   }
 
   m_threads.clear();
-  cout<<"clean over"<<endl;
+  //cout<<"clean over"<<endl;
 
 
 }
@@ -54,7 +54,7 @@ void ThreadPool::EnqueueTask(shared_ptr<Task>& task) {
   {
     std::lock_guard<std::mutex> lock(mtx_queueMutex);
     pq_taskPriorityQueue.push(task);
-    cout<<"taskPQ size:"<<pq_taskPriorityQueue.size()<<endl;
+    //cout<<"taskPQ size:"<<pq_taskPriorityQueue.size()<<endl;
   }
   con_Var.notify_one();
 

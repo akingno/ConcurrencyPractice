@@ -1,0 +1,31 @@
+# 忽略所有由 CMake 生成的文件夹
+/cmake-build-*/
+
+# 忽略 CMake 缓存和生成的文件
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# 忽略 CLion 的项目文件
+.idea/
+*.iml
+
+# 忽略编译生成的目标文件
+*.o
+*.obj
+*.exe
+*.out
+*.log
+*.gch
+
+# 忽略临时文件
+*.tmp
+*.swp
+*.bak
+*~
+
+# 忽略其他 IDE 生成的文件（根据需要添加）
+.vscode/
+*.sublime-project
+*.sublime-workspace

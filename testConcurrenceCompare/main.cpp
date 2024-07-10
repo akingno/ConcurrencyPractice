@@ -22,7 +22,7 @@ tuple<int, int> LoadInput() {
 
 int main() {
   auto [low, high] = LoadInput();
-  int sum = 0;
+  long long sum = 0;
 
   auto start = chrono::system_clock::now();
 

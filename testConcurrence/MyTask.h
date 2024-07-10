@@ -17,8 +17,8 @@ class Task{
   int i_priority;
   std::atomic<int>& m_totalSum;
  public:
-  Task() = default;
-  Task(TaskFunction taskfun,Range &&range,int priority, std::atomic<int>& totalSum) :taskfunction(taskfun),
+  Task() = delete;
+  Task(const TaskFunction taskfun,Range &&range,int priority, std::atomic<int>& totalSum) :taskfunction(taskfun),
                                                                                         m_range(range),
                                                                                         i_priority(priority),
                                                                                         m_totalSum(totalSum){}

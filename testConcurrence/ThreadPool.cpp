@@ -6,7 +6,6 @@
 #include <mutex>
 using namespace std;
 ThreadPool::ThreadPool(int num_threads) {
-  b_stopFlag = false;
   Init(num_threads);
 }
 ThreadPool::~ThreadPool() {
@@ -40,9 +39,12 @@ void ThreadPool::Stop() {
   }
 
   m_threads.clear();
+  cout<<"clean over"<<endl;
+
+
 }
 
-void ThreadPool::EnqueueTask(Task&& task) {
+void ThreadPool::EnqueueTask(shared_ptr<Task>& task) {
   /*
    *
    * 将task放入taskqueue
@@ -51,7 +53,7 @@ void ThreadPool::EnqueueTask(Task&& task) {
    * */
   {
     std::lock_guard<std::mutex> lock(mtx_queueMutex);
-    pq_taskPriorityQueue.push(std::move(task));
+    pq_taskPriorityQueue.push(task);
     cout<<"taskPQ size:"<<pq_taskPriorityQueue.size()<<endl;
   }
   con_Var.notify_one();
@@ -85,13 +87,14 @@ bool ThreadPool::IsFull() const {
 
 void ThreadPool::Run() {
   while(true){
+
     /*
      * 1. con_var.wait()
      * 2. 如果
      *
      *
      * */
-    Task task;
+    shared_ptr<Task> task;
     {
       unique_lock<mutex> lock(mtx_queueMutex);
 
@@ -106,15 +109,30 @@ void ThreadPool::Run() {
       if (!pq_taskPriorityQueue.empty()) {
         task = pq_taskPriorityQueue.top();
         pq_taskPriorityQueue.pop();
+        active_tasks.fetch_add(1);
       } else {
         continue;
       }
     }
 
-    auto result = task.execute();
+    auto result = task->execute();
 
     cout<<"Result:"<<result<<endl;
+    b_hasRun = true;
+    active_tasks.fetch_sub(1);
+
+    if (active_tasks.load() == 0) {
+      std::lock_guard<std::mutex> lock(all_tasks_done_mutex);
+      all_tasks_done.notify_one();
+    }
 
   }
 }
+void ThreadPool::WaitForAllTasksDone() {
+  unique_lock<mutex> lock(all_tasks_done_mutex);
+  all_tasks_done.wait(lock,[this](){
+    return (active_tasks.load() == 0 && b_hasRun.load());
+  });
+  cout<<"wait end"<<endl;
 
+}

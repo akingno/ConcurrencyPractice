@@ -19,13 +19,19 @@ class ThreadPool : std::enable_shared_from_this<ThreadPool>{
   std::condition_variable                     con_Var;//wait
 
 
-  std::priority_queue<Task>                   pq_taskPriorityQueue;
+  std::priority_queue<std::shared_ptr<Task>>  pq_taskPriorityQueue;
   std::mutex                                  mtx_queueMutex;
+
+  std::condition_variable                     all_tasks_done;
+  std::mutex                                  all_tasks_done_mutex;
+  std::atomic<int>                            active_tasks = 0;
+  std::atomic<bool>                           b_hasRun = false;
 
   bool                                        b_stopFlag;
   void Init(int);
   void Run();
   void Stop();
+
 
   public:
   explicit ThreadPool(int);
@@ -33,7 +39,8 @@ class ThreadPool : std::enable_shared_from_this<ThreadPool>{
   ~ThreadPool();
   //void operator=(ThreadPool);
   //void operator=(ThreadPool&);
-  void EnqueueTask(Task&&);
+  void EnqueueTask(std::shared_ptr<Task>&);
+  void WaitForAllTasksDone();
 
   bool IsFull() const;
 };

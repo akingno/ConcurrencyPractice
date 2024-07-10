@@ -101,8 +101,10 @@ int main() {
 
   auto threadPool = make_unique<ThreadPool>(Globals::NUM_THREADS);
   for(auto& subrange : *subRange) {
-    threadPool->EnqueueTask(Task(taskFunction,std::move(subrange),0,Sum));
+    auto task = make_shared<Task>(taskFunction,std::move(subrange),0,Sum);
+    threadPool->EnqueueTask(task);
   }
+  threadPool->WaitForAllTasksDone();
   cout<<"Total:"<<Sum<<endl;
 
 

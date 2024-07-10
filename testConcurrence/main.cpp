@@ -87,7 +87,7 @@ int main() {
   auto subRange = SplitRange(low, high);
 
 
-  TaskFunction taskFunction = [](pair<int,int> range,atomic<int>& Sum) -> int{
+  TaskFunction taskFunction = [](pair<int,int> range) -> int{
     int sum = 0;
     for (int i = range.first; i <= range.second; ++i){
       if(Is_prime(i)){
@@ -95,13 +95,12 @@ int main() {
         sum+=i;
       }
     }
-    Sum += sum;
     return sum;
   };
 
   auto threadPool = make_unique<ThreadPool>(Globals::NUM_THREADS);
   for(auto& subrange : *subRange) {
-    threadPool->EnqueueTask(Task(taskFunction,std::move(subrange),0,Sum));
+    threadPool->EnqueueTask(Task(taskFunction,std::move(subrange),0));
   }
   cout<<"Total:"<<Sum<<endl;
 

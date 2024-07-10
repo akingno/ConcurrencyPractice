@@ -2,9 +2,7 @@
 #include "Globals.h"
 #include "MyTask.h"
 #include "ThreadPool.h"
-#include <memory>
-#include <thread>
-#include <vector>
+#include "stdafx.h"
 
 using namespace std;
 
@@ -71,8 +69,10 @@ tuple<int, int> LoadInput(){
  *
  * */
 int main() {
+
   atomic<int> Sum =0;
   auto [low, high] = LoadInput();
+  auto start = chrono::system_clock::now();
 
   /*
    * subRange中，[lowest, highest]
@@ -110,6 +110,12 @@ int main() {
   }
   threadPool->WaitForAllTasksDone();
   cout<<"Total:"<<Sum<<endl;
+  auto end = chrono::system_clock::now();
+
+  auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
+  cout<<"Time spent:"
+       << static_cast<double>(duration.count()) / 1000.0
+       <<" milliseconds"<<endl;
 
 
 

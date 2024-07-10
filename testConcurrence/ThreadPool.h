@@ -25,7 +25,7 @@ class ThreadPool : std::enable_shared_from_this<ThreadPool>{
   std::condition_variable                     all_tasks_done;
   std::mutex                                  all_tasks_done_mutex;
   std::atomic<int>                            active_tasks = 0;
-  std::atomic<bool>                           b_hasRun = false;
+  std::atomic<bool>                           b_hasRun;
 
   bool                                        b_stopFlag;
   void Init(int);
@@ -34,14 +34,18 @@ class ThreadPool : std::enable_shared_from_this<ThreadPool>{
 
 
   public:
-  explicit ThreadPool(int);
-  //ThreadPool(ThreadPool&);
-  ~ThreadPool();
-  //void operator=(ThreadPool);
-  //void operator=(ThreadPool&);
-  void EnqueueTask(std::shared_ptr<Task>&);
-  void WaitForAllTasksDone();
+   ThreadPool() = delete;
+   explicit ThreadPool(int);
+   ~ThreadPool();
 
-  bool IsFull() const;
+   ThreadPool(const ThreadPool&) = delete;
+   ThreadPool(ThreadPool&&) noexcept = delete;
+
+   void operator=(const ThreadPool&) = delete;
+   ThreadPool& operator=(ThreadPool&&) noexcept = delete;
+
+   void EnqueueTask(std::shared_ptr<Task>&);
+   void WaitForAllTasksDone();
+
 };
 #endif//TESTCONCURRENCE__THREADPOOL_H_

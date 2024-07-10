@@ -8,7 +8,7 @@
 #include <functional>
 #include <iostream>
 
-using TaskFunction = std::function<int(std::pair<int, int>,std::atomic<int>&)>;
+using TaskFunction = std::function<void(std::pair<int, int>,std::atomic<int>&)>;
 using Range = std::pair<int,int>;
 
 class Task{
@@ -23,8 +23,8 @@ class Task{
                                                                                         i_priority(priority),
                                                                                         m_totalSum(totalSum){}
 
-  auto execute(){
-    return taskfunction(m_range,m_totalSum);
+  void execute(){
+    taskfunction(m_range,m_totalSum);
   }
   bool operator<(const Task& other) const{
     return i_priority < other.i_priority;

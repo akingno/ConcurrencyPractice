@@ -86,8 +86,13 @@ int main() {
    * */
   auto subRange = SplitRange(low, high);
 
-
-  TaskFunction taskFunction = [](pair<int,int> range,atomic<int>& Sum) -> int{
+  /*
+   *
+   * 新建taskFunction
+   * 当前taskFunction只能是
+   *
+   * */
+  TaskFunction taskFunction = [](pair<int,int> range,atomic<int>& Sum){
     int sum = 0;
     for (int i = range.first; i <= range.second; ++i){
       if(Is_prime(i)){
@@ -96,7 +101,6 @@ int main() {
       }
     }
     Sum += sum;
-    return sum;
   };
 
   auto threadPool = make_unique<ThreadPool>(Globals::NUM_THREADS);

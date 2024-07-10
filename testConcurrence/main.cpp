@@ -1,6 +1,7 @@
 
 #include "Globals.h"
 #include "MyTask.h"
+#include "ThreadPool.h"
 #include <memory>
 #include <queue>
 #include <thread>
@@ -83,9 +84,28 @@ int main() {
    *
    * */
   auto subRange = SplitRange(low, high);
+  /*
+   *
+   * 存放素数的数组
+   *
+   * */
   vector<int> primes;
 
-  priority_queue<TaskWithPriority> taskPriorityQueue;
+  TaskFunction taskFunction = [](pair<int,int> range) -> int{
+    int sum;
+    for (int i = range.first; i < range.second; ++i){
+      if(Is_prime(i)){
+        sum+=i;
+      }
+    }
+    return sum;
+  };
+
+  auto threadPool = make_unique<ThreadPool>();
+  for(auto& subrange : *subRange) {
+    threadPool->EnqueueTask(Task(std::move(taskFunction),std::move(subrange),0));
+  }
+
 
 
 

@@ -18,11 +18,11 @@ class ThreadPool : std::enable_shared_from_this<ThreadPool>{
     std::thread                 m_thread;
     std::atomic<bool>           b_isInLeisure;
     std::weak_ptr<ThreadPool>   m_threadPool;
-    std::mutex                  m_condition_mutex;
+    std::mutex                  mtx_conditionMutex;
     std::condition_variable     con_Var;//wait
     friend class ThreadPool;
    public:
-    explicit ThreadStruct(std::shared_ptr<ThreadPool>);
+    explicit ThreadStruct(std::shared_ptr<ThreadPool>);//todo:此处好像无法用引用因为shared_from_this()
     ~ThreadStruct();
     void Run();
     void Stop();
@@ -32,14 +32,15 @@ class ThreadPool : std::enable_shared_from_this<ThreadPool>{
   std::vector<std::shared_ptr<ThreadStruct>>  m_threads;
   std::priority_queue<Task>                   pq_taskPriorityQueue;
   std::mutex                                  mtx_queueMutex;
+  std::condition_variable                     con_condition;
 
   bool                                        b_stopFlag;
 
 
-  void Init();
+  void Init(int);
   bool IsFull() const;
  public:
-  explicit ThreadPool();
+  explicit ThreadPool(int);
   //ThreadPool(ThreadPool&);
   ~ThreadPool();
   //void operator=(ThreadPool);
@@ -48,7 +49,7 @@ class ThreadPool : std::enable_shared_from_this<ThreadPool>{
   void NotifiedByTaskqueue();
   void DispatchTask();
   void Stop();
-  void EnqueueTask(Task);
+  void EnqueueTask(Task&&);
 
 
 

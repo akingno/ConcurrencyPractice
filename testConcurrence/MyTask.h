@@ -13,24 +13,24 @@ using Range = std::pair<int,int>;
 class Task{
   TaskFunction taskfunction;
   std::pair<int,int> m_range;
-  int priority;
+  int i_priority;
  public:
   Task() = default;
-  Task(TaskFunction &taskfun,Range &range) : taskfunction(std::move(taskfun)),
-                                              m_range(range),
-                                              priority(0){}
+  Task(TaskFunction &&taskfun,Range &&range,int priority) : taskfunction(std::move(taskfun)),
+                                                              m_range(range),
+                                                              i_priority(priority){}
 
-  void execute(){
-    taskfunction(m_range);
+  auto execute(){
+    return taskfunction(m_range);
   }
   bool operator<(const Task& other) const{
-    return priority < other.priority;
+    return i_priority < other.i_priority;
   }
   bool operator==(const Task& other) const{
-    return priority == other.priority;
+    return i_priority == other.i_priority;
   }
   int getPriority() const {
-    return priority;
+    return i_priority;
   }
 };
 

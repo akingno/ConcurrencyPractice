@@ -12,7 +12,7 @@ using namespace std;
 
 auto SplitRange(const int low,const int high) {
   /*
-   * 切割成 2 * threads 份
+   * 把求和范围切割成 2 * threads 份
    * */
   int subRangeLength = ((high - low) + 1) / (2 * Globals::NUM_THREADS);
   auto subRange = make_shared<vector<pair<int,int>>>();
@@ -29,7 +29,6 @@ auto SplitRange(const int low,const int high) {
   /*
    * Split End
    * */
-
   return subRange;
 }
 
@@ -59,20 +58,21 @@ tuple<int, int> LoadInput(){
 }
 
 /*
- * 用多线程求两个数中间的素数之和
  *
- * TODO: 1. 实现主线程读取任务切割任务和输出结果。
- *        2.实现线程池和线程的初始化，对线程的通知，和销毁线程。
- *        3.实现任务队列，实现主线程把任务放入任务队列，和通知线程池。
- *        4.实现线程池的任务分配（线程通知线程池：
- *          每个线程在完成任务后，会通知线程池进行任务分配。
- *          线程池会从任务队列中取出新任务并分配给通知的线程。）
+ * 用多线程求两个数中间的素数之和
  *
  * */
 int main() {
 
   atomic<long long> Sum =0;
+
   auto [low, high] = LoadInput();
+
+  /*
+   *
+   * 读取计算范围后开始计时
+   *
+   * */
   auto start = chrono::system_clock::now();
 
   /*
@@ -103,8 +103,18 @@ int main() {
   };
 
 
-
+  /*
+   *
+   * 创建线程池
+   *
+   * */
   auto threadPool = make_unique<ThreadPool>(Globals::NUM_THREADS);
+
+  /*
+   *
+   * 把分割好的范围一段段和 taskFunction组合好，并放入taskqueue
+   *
+   * */
   for(auto subrange : *subRange) {
 
     /*
@@ -120,6 +130,11 @@ int main() {
     threadPool->EnqueueTask(task);
 
   }
+  /*
+   *
+   * 在放入taskqueue后，开始阻塞等待，直到所有thread执行完毕
+   *
+   * */
   threadPool->WaitForAllTasksDone();
   cout<<"Total:"<<Sum<<endl;
   auto end = chrono::system_clock::now();

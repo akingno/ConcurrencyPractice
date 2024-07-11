@@ -16,14 +16,14 @@ class ThreadPool : std::enable_shared_from_this<ThreadPool>{
 
 
   std::vector<std::thread>                          m_threads;
-  std::condition_variable                           con_Var;//wait
+  std::condition_variable                           con_var_task;
 
 
   std::priority_queue<std::shared_ptr<Task<void>>>  pq_taskPriorityQueue;
   std::mutex                                        mtx_queueMutex;
 
-  std::condition_variable                           all_tasks_done;
-  std::mutex                                        all_tasks_done_mutex;
+  std::condition_variable                           con_var_all_tasks_done;
+  std::mutex                                        mutex_all_tasks_done;
   std::atomic<int>                                  active_tasks = 0;
   std::atomic<bool>                                 b_hasRun;
 

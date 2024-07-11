@@ -14,19 +14,23 @@
 template<typename ResultType>
 class Task{
   std::function<ResultType()> f_func;
-  int i_priority;
+  int i_priority; // used for priority queue
  public:
 
   Task() = delete;
   Task(int priority) = delete;
   Task(std::function<ResultType()> f, int priority) : i_priority(priority), f_func(std::move(f)) {}
+
+  /*
+   *
+   * There may be things in f that can not be moved, for example atomic<>
+   * Thus constructor using std::move is not allowed
+   *
+   * */
   Task(std::function<ResultType()> &&f, int priority) = delete;
 
   Task(const Task&) = delete;
-  Task(Task && t) noexcept{
-    f_func = std::move(t.f_func);
-    i_priority = t.i_priority;
-  }
+  Task(Task && t) = delete;
 
 
 

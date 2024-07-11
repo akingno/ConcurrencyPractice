@@ -11,7 +11,7 @@ ThreadPool::ThreadPool(int num_threads) :b_stopFlag(false), b_hasRun(false){
 ThreadPool::~ThreadPool() {
   /*
    *
-   * 停止并删除所有threadstruct
+   * 停止：删除所有thread
    *
    * */
   Stop();
@@ -30,7 +30,7 @@ void ThreadPool::Stop() {
     b_stopFlag = true;
   }
 
-  con_Var.notify_all();
+  con_var_task.notify_all();
 
   for(auto& thd:m_threads){
     if(thd.joinable()){
@@ -47,8 +47,8 @@ void ThreadPool::Stop() {
 void ThreadPool::EnqueueTask(shared_ptr<Task<void>>& task) {
   /*
    *
-   * 将task放入taskqueue
-   * 用convar进行通知，再notify一个
+   * 1. 上锁，将task放入taskqueue
+   * 2. 用con_var通知一个线程
    *
    * */
   {
@@ -56,7 +56,7 @@ void ThreadPool::EnqueueTask(shared_ptr<Task<void>>& task) {
     pq_taskPriorityQueue.push(task);
     //cout<<"taskPQ size:"<<pq_taskPriorityQueue.size()<<endl;
   }
-  con_Var.notify_one();
+  con_var_task.notify_one();
 
 }
 
@@ -84,16 +84,16 @@ void ThreadPool::Run() {
 
       /*
        *
-       * 如果taskpq有任务或者已经结束了就解锁
+       * 如果taskqueue有任务或者已经结束了就解锁
        *
        * */
-      con_Var.wait(lock,[this](){
+      con_var_task.wait(lock,[this](){
         return (!pq_taskPriorityQueue.empty() || b_stopFlag);
       });
 
       /*
        *
-       * 如果已经结束了而且taskpq空了则返回
+       * 如果已经结束了而且taskqueue空了则返回
        *
        * */
       if(pq_taskPriorityQueue.empty() && b_stopFlag){
@@ -101,7 +101,7 @@ void ThreadPool::Run() {
       }
       /*
        *
-       * 如果taskqp有task则取出执行
+       * 如果taskqueue有task则取出执行
        *
        * */
       if (!pq_taskPriorityQueue.empty()) {
@@ -113,6 +113,13 @@ void ThreadPool::Run() {
       }
     }
 
+    /*
+     *
+     * task执行
+     * 此处可以带参数，本例不用
+     *
+     *
+     * */
     task->execute();
     b_hasRun = true;
     active_tasks.fetch_sub(1);
@@ -123,8 +130,8 @@ void ThreadPool::Run() {
      *
      * */
     if (active_tasks.load() == 0) {
-      std::lock_guard<std::mutex> lock(all_tasks_done_mutex);
-      all_tasks_done.notify_one();
+      std::lock_guard<std::mutex> lock(mutex_all_tasks_done);
+      con_var_all_tasks_done.notify_one();
     }
 
   }
@@ -132,11 +139,12 @@ void ThreadPool::Run() {
 void ThreadPool::WaitForAllTasksDone() {
   /*
    *
-   * main在新建完task后会开始执行这个函数，等所有tasks都执行完再进行下一步
+   * main在新建完task后会开始执行这个函数
+   * 这个函数会一直等待，直到所有tasks都执行完，再进行下一步
    *
    * */
-  unique_lock<mutex> lock(all_tasks_done_mutex);
-  all_tasks_done.wait(lock,[this](){
+  unique_lock<mutex> lock(mutex_all_tasks_done);
+  con_var_all_tasks_done.wait(lock,[this](){
     return (active_tasks.load() == 0 && b_hasRun.load());
   });
 

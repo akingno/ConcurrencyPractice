@@ -13,15 +13,15 @@ using TaskFunction = std::function<void(std::pair<int, int>,std::atomic<long lon
 
 using Range = std::pair<int,int>;
 
-class Task{
+class MyTask{
   TaskFunction taskfunction;
   std::pair<int,int> m_range;
   int i_priority;
   std::atomic<long long>& m_totalSum;
  public:
 
-  Task() = delete;
-  Task(const TaskFunction taskfun,Range &&range,int priority, std::atomic<long long>& totalSum) :taskfunction(taskfun),
+  MyTask() = delete;
+  MyTask(const TaskFunction taskfun,Range &&range,int priority, std::atomic<long long>& totalSum) :taskfunction(taskfun),
                                                                                         m_range(range),
                                                                                         i_priority(priority),
                                                                                         m_totalSum(totalSum){}
@@ -30,10 +30,10 @@ class Task{
     taskfunction(m_range,m_totalSum);
 
   }
-  bool operator<(const Task& other) const{
+  bool operator<(const MyTask& other) const{
     return i_priority < other.i_priority;
   }
-  bool operator==(const Task& other) const{
+  bool operator==(const MyTask& other) const{
     return i_priority == other.i_priority;
   }
   int getPriority() const {

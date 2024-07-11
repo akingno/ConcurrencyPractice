@@ -44,7 +44,7 @@ void ThreadPool::Stop() {
 
 }
 
-void ThreadPool::EnqueueTask(shared_ptr<Task>& task) {
+void ThreadPool::EnqueueTask(shared_ptr<Task<void>>& task) {
   /*
    *
    * 将task放入taskqueue
@@ -78,7 +78,7 @@ void ThreadPool::Init(int num_threads) {
 void ThreadPool::Run() {
   while(true){
 
-    shared_ptr<Task> task;
+    shared_ptr<Task<void>> task;
     {
       unique_lock<mutex> lock(mtx_queueMutex);
 
@@ -142,4 +142,3 @@ void ThreadPool::WaitForAllTasksDone() {
 
 
 }
-

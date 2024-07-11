@@ -4,7 +4,7 @@
 
 #ifndef TESTCONCURRENCE__THREADPOOL_H_
 #define TESTCONCURRENCE__THREADPOOL_H_
-#include "MyTask.h"
+#include "Task.h"
 #include <condition_variable>
 #include <iostream>
 #include <memory>
@@ -15,19 +15,19 @@
 class ThreadPool : std::enable_shared_from_this<ThreadPool>{
 
 
-  std::vector<std::thread>                    m_threads;
-  std::condition_variable                     con_Var;//wait
+  std::vector<std::thread>                          m_threads;
+  std::condition_variable                           con_Var;//wait
 
 
-  std::priority_queue<std::shared_ptr<Task>>  pq_taskPriorityQueue;
-  std::mutex                                  mtx_queueMutex;
+  std::priority_queue<std::shared_ptr<Task<void>>>  pq_taskPriorityQueue;
+  std::mutex                                        mtx_queueMutex;
 
-  std::condition_variable                     all_tasks_done;
-  std::mutex                                  all_tasks_done_mutex;
-  std::atomic<int>                            active_tasks = 0;
-  std::atomic<bool>                           b_hasRun;
+  std::condition_variable                           all_tasks_done;
+  std::mutex                                        all_tasks_done_mutex;
+  std::atomic<int>                                  active_tasks = 0;
+  std::atomic<bool>                                 b_hasRun;
 
-  bool                                        b_stopFlag;
+  bool                                              b_stopFlag;
   void Init(int);
   void Run();
   void Stop();
@@ -44,7 +44,7 @@ class ThreadPool : std::enable_shared_from_this<ThreadPool>{
    void operator=(const ThreadPool&) = delete;
    ThreadPool& operator=(ThreadPool&&) noexcept = delete;
 
-   void EnqueueTask(std::shared_ptr<Task>&);
+   void EnqueueTask(std::shared_ptr<Task<void>>& );
    void WaitForAllTasksDone();
 
 };

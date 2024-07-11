@@ -9,5 +9,6 @@ add_executable(testConcurrence main.cpp
         ThreadPool.cpp
         Globals.h
         MyTask.h
-        stdafx.h)
+        stdafx.h
+        Task.h)
 target_precompile_headers(testConcurrence PRIVATE stdafx.h)

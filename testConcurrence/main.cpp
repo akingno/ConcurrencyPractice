@@ -1,6 +1,7 @@
 
 #include "Globals.h"
 #include "MyTask.h"
+#include "Task.h"
 #include "ThreadPool.h"
 #include "stdafx.h"
 
@@ -83,28 +84,39 @@ int main() {
 
   /*
    *
-   * 新建taskFunction
-   * 当前taskFunction只能是
+   * taskAccumulate 把一个求和函数封进lambda
+   *
+   *
    *
    * */
-  TaskFunction taskFunction = [](pair<int,int> range,atomic<long long>& Sum){
 
+  auto taskAccumulate = [](pair<int,int> range, atomic<long long>& Sum){
     long long sum = 0;
     for (int i = range.first; i <= range.second; ++i){
       if(Is_prime(i)){
-        //cout<<" "<<i;
         sum+=i;
+        //cout<<","<<i;
       }
     }
 
     Sum += sum;
-
   };
 
-  auto threadPool = make_unique<ThreadPool>(Globals::NUM_THREADS);
-  for(auto& subrange : *subRange) {
 
-    auto task = make_shared<Task>(taskFunction,std::move(subrange),0,Sum);
+
+  auto threadPool = make_unique<ThreadPool>(Globals::NUM_THREADS);
+  for(auto subrange : *subRange) {
+
+    /*
+     * 把taskAccumulate函数和其参数
+     * 封装进std::function
+     *
+     * */
+    auto packagedTaskAccumulate = std::function<void()>([=, &Sum](){
+      taskAccumulate(subrange, Sum);
+    });
+
+    auto task = make_shared<Task<void>>(packagedTaskAccumulate,0);
     threadPool->EnqueueTask(task);
 
   }

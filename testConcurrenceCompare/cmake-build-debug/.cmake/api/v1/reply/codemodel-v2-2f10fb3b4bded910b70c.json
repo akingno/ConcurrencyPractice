@@ -49,8 +49,8 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "C:/Users/jacob/Desktop/temp2/test2/testConcurrenceCompare/cmake-build-debug",
-		"source" : "C:/Users/jacob/Desktop/temp2/test2/testConcurrenceCompare"
+		"build" : "C:/Users/jacob/Desktop/temp2/ConcurrencyPractice/testConcurrenceCompare/cmake-build-debug",
+		"source" : "C:/Users/jacob/Desktop/temp2/ConcurrencyPractice/testConcurrenceCompare"
 	},
 	"version" : 
 	{

@@ -59,6 +59,8 @@ tuple<int, int> LoadInput(){
   return make_tuple(low,high);
 }
 
+
+
 /*
  *
  * 用多线程求两个数中间的素数之和
@@ -66,6 +68,8 @@ tuple<int, int> LoadInput(){
  * */
 int main() {
   int NUM_THREADS = 4;
+
+  condition_variable AccumulateVariable;
 
   atomic<long long> Sum =0;
 
@@ -84,12 +88,14 @@ int main() {
    * */
   auto subRange = SplitRange(low, high, NUM_THREADS);
 
+
+
   /*
    *
    * 创建线程池
    *
    * */
-  auto threadPool = make_unique<ThreadPool>(NUM_THREADS);
+  auto threadPool = ThreadPool::CreateThreadPool(NUM_THREADS);
 
   /*
    *

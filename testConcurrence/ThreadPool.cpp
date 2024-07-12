@@ -5,8 +5,8 @@
 #include "ThreadPool.h"
 #include <mutex>
 using namespace std;
-ThreadPool::ThreadPool(int num_threads) : stop_flag_(false), has_run_flag_(false){
-  Init(num_threads);
+ThreadPool::ThreadPool() : stop_flag_(false), has_run_flag_(false){
+
 }
 ThreadPool::~ThreadPool() {
   /*
@@ -17,6 +17,14 @@ ThreadPool::~ThreadPool() {
   Stop();
 }
 
+std::shared_ptr<ThreadPool> ThreadPool::CreateThreadPool(int thread_num) {
+  auto ptr = make_shared<ThreadPool>();
+  ptr->Init(thread_num);
+
+  return ptr;
+
+}
+
 void ThreadPool::Stop() {
   /*
    *
@@ -24,13 +32,13 @@ void ThreadPool::Stop() {
    * b_stopFlag = true
    *
    * */
-
-  {
-    std::lock_guard<std::mutex> lock(queue_mutex_);
-    stop_flag_ = true;
-  }
+  stop_flag_ = true;
 
   con_var_task_sig_.notify_all();
+
+  if(threads_.empty()){
+    return;
+  }
 
   for(auto& thd: threads_){
     if(thd.joinable()){
@@ -115,10 +123,10 @@ void ThreadPool::Run() {
      * 执行完，如果此时没有任何task执行，通知main进入下一步
      *
      * */
-      if (active_tasks_.load() == 0) {
-        std::lock_guard<std::mutex> lock(all_tasks_done_mutex_);
-        con_var_all_tasks_done_.notify_one();
-      }
+    if (active_tasks_.load() == 0) {
+      std::lock_guard<std::mutex> lock(all_tasks_done_mutex_);
+      con_var_all_tasks_done_.notify_one();
+    }
 
   }
 }
@@ -165,3 +173,4 @@ bool ThreadPool::PopTask(shared_ptr<Task<void>>& task) {
     return false;
   }
 }
+

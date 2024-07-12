@@ -14,11 +14,11 @@
 
 class ThreadPool : std::enable_shared_from_this<ThreadPool>{
  public:
+  static std::shared_ptr<ThreadPool> CreateThreadPool(int thread_num);
 
-  using TaskSafePriorityQueue = SafeContainers::SafePriorityQueue<std::shared_ptr<Task<void>>>;
+  using TaskSafePriorityQueue = SafeContainers::SafePriorityQueue<std::shared_ptr<Task<void> > >;
 
-  ThreadPool() = delete;
-  explicit ThreadPool(int thread_num);
+  ThreadPool();
   ~ThreadPool();
 
   ThreadPool(const ThreadPool&) = delete;

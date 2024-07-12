@@ -44,7 +44,7 @@ void ThreadPool<T>::CreateAccumulateThread(){
 
 template<typename T>
 void ThreadPool<T>::Accumulate() {
-  std::cout<<"Accumulate thread begin"<<std::endl;
+  //std::cout<<"Accumulate thread begin"<<std::endl;
   T sum = 0;
   do{
     T value = 0;
@@ -162,7 +162,7 @@ void ThreadPool<T>::Run() {
      *
      * */
     if (active_tasks_.load() == 0) {
-      std::cout<<"all task done"<<std::endl;
+      //std::cout<<"all task done"<<std::endl;
       std::lock_guard<std::mutex> lock(all_tasks_done_mutex_);
       con_var_all_tasks_done_.notify_one();
       all_tasks_done = true;

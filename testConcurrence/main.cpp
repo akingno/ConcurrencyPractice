@@ -97,6 +97,7 @@ int main() {
    * */
   auto threadPool = ThreadPool::CreateThreadPool(NUM_THREADS);
 
+
   /*
    *
    * 把分割好的范围一段段和 taskFunction组合好，并放入taskqueue
@@ -109,7 +110,7 @@ int main() {
      * 封装进std::function
      *
      * */
-    auto functionTaskAccumulate = std::function<void()>([=, &Sum](){
+    auto functionTaskAccumulate = std::function<void()>([=, &Sum,&threadPool](){
       long long sum = 0;
       for (int i = subrange.first; i <= subrange.second; ++i){
         if(Is_prime(i)){
@@ -119,6 +120,7 @@ int main() {
       }
 
       Sum += sum;
+      threadPool->EnqueueResult(sum);
     });
 
     auto task = make_shared<Task<void>>(functionTaskAccumulate,0);
@@ -131,7 +133,7 @@ int main() {
    *
    * */
   threadPool->WaitForAllTasksDone();
-  cout<<"Total:"<<Sum<<endl;
+  cout<<"Total By Sum:"<<Sum<<endl;
   auto end = chrono::system_clock::now();
 
   auto duration = chrono::duration_cast<chrono::microseconds>(end - start);

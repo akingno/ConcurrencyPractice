@@ -86,6 +86,9 @@
 		<Unit filename="C:/Users/jacob/Desktop/temp2/ConcurrencyPractice/testConcurrence/SafePriorityQueue.h">
 			<Option target="testConcurrence"/>
 		</Unit>
+		<Unit filename="C:/Users/jacob/Desktop/temp2/ConcurrencyPractice/testConcurrence/SafeQueue.h">
+			<Option target="testConcurrence"/>
+		</Unit>
 		<Unit filename="C:/Users/jacob/Desktop/temp2/ConcurrencyPractice/testConcurrence/Task.h">
 			<Option target="testConcurrence"/>
 		</Unit>

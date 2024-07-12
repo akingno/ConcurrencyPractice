@@ -34,7 +34,7 @@
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 14,
+				"line" : 15,
 				"parent" : 0
 			}
 		]
@@ -151,14 +151,15 @@
 				4,
 				5,
 				6,
-				7
+				7,
+				8
 			]
 		},
 		{
 			"name" : "Precompile Header File",
 			"sourceIndexes" : 
 			[
-				8
+				9
 			]
 		}
 	],
@@ -205,6 +206,11 @@
 		{
 			"backtrace" : 1,
 			"path" : "SafePriorityQueue.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "SafeQueue.h",
 			"sourceGroupIndex" : 1
 		},
 		{

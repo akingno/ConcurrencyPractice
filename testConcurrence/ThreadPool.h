@@ -4,11 +4,12 @@
 
 #ifndef TESTCONCURRENCE__THREADPOOL_H_
 #define TESTCONCURRENCE__THREADPOOL_H_
+#include "SafePriorityQueue.h"
+#include "SafeQueue.h"
 #include "Task.h"
 #include <condition_variable>
 #include <iostream>
 #include <memory>
-#include "SafePriorityQueue.h"
 #include <thread>
 #include <vector>
 
@@ -28,17 +29,23 @@ class ThreadPool : std::enable_shared_from_this<ThreadPool>{
   ThreadPool& operator=(ThreadPool&&) noexcept = delete;
 
   void EnqueueTask(std::shared_ptr<Task<void>>& task);
+
+  void EnqueueResult(long long int result);
+
   void WaitForAllTasksDone();
 
 
  private:
 
-  void Init(int thread_num);
+  void CreateThreads(int thread_num);
   void Run();
   void Stop();
   void ExecuteTask(std::shared_ptr<Task<void>>& task);
   bool PopTask(std::shared_ptr<Task<void>>& task);
+  void CreateAccumulateThread();
+  void Accumulate();
 
+ private:
   std::vector<std::thread>                          threads_;
   std::condition_variable                           con_var_task_sig_;
 
@@ -51,6 +58,14 @@ class ThreadPool : std::enable_shared_from_this<ThreadPool>{
   std::atomic<bool>                                 has_run_flag_;
 
   std::atomic<bool>                                 stop_flag_;
+  std::atomic<bool>                                 all_tasks_done;
+
+
+  std::jthread                                      calculate_thread_;
+
+  SafeContainers::SafeQueue<long long>              result_queue_;
+  std::mutex                                        calculate_result_mutex_;
+  std::condition_variable                           con_var_calculate_results_;
 
 
 };

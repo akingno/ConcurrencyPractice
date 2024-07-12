@@ -17,12 +17,39 @@ ThreadPool::~ThreadPool() {
   Stop();
 }
 
+
+void ThreadPool::EnqueueResult(long long result){
+  result_queue_.enqueue(result);
+  con_var_calculate_results_.notify_all();
+}
+
 std::shared_ptr<ThreadPool> ThreadPool::CreateThreadPool(int thread_num) {
   auto ptr = make_shared<ThreadPool>();
-  ptr->Init(thread_num);
+  ptr->CreateThreads(thread_num);
+  ptr->CreateAccumulateThread();
 
   return ptr;
 
+}
+void ThreadPool::CreateAccumulateThread(){
+  calculate_thread_ = jthread(&ThreadPool::Accumulate,this);
+
+
+}
+
+void ThreadPool::Accumulate() {
+  cout<<"Accumulate thread begin"<<endl;
+  long long sum = 0;
+  do{
+    long long value = 0;
+    while (result_queue_.dequeue(value)) {
+      //cout<<value<<","<<endl;
+      sum += value;
+    }
+    //cout<<"add end:"<<sum<<endl;
+  }while(!all_tasks_done.load());
+
+  cout<<"Sum By Accumulator:"<<sum<<endl;
 }
 
 void ThreadPool::Stop() {
@@ -32,6 +59,7 @@ void ThreadPool::Stop() {
    * b_stopFlag = true
    *
    * */
+
   stop_flag_ = true;
 
   con_var_task_sig_.notify_all();
@@ -45,6 +73,7 @@ void ThreadPool::Stop() {
       thd.join();
     }
   }
+
 
   threads_.clear();
   //cout<<"clean over"<<endl;
@@ -61,6 +90,7 @@ void ThreadPool::EnqueueTask(shared_ptr<Task<void>>& task) {
    * */
 
   task_priorityQueue_.push(task);
+  active_tasks_.fetch_add(1);
   //cout<<"taskPQ size:"<<pq_taskPriorityQueue.size()<<endl;
 
   con_var_task_sig_.notify_one();
@@ -69,7 +99,7 @@ void ThreadPool::EnqueueTask(shared_ptr<Task<void>>& task) {
 
 
 
-void ThreadPool::Init(int num_threads) {
+void ThreadPool::CreateThreads(int num_threads) {
   /*
    * 初始化，Adding threads
    *
@@ -83,7 +113,7 @@ void ThreadPool::Init(int num_threads) {
 
 
 void ThreadPool::Run() {
-  while(true){
+  while(!stop_flag_){
 
     shared_ptr<Task<void>> task;
     {
@@ -124,12 +154,16 @@ void ThreadPool::Run() {
      *
      * */
     if (active_tasks_.load() == 0) {
+      cout<<"all task done"<<endl;
       std::lock_guard<std::mutex> lock(all_tasks_done_mutex_);
       con_var_all_tasks_done_.notify_one();
+      all_tasks_done = true;
     }
 
   }
 }
+
+
 void ThreadPool::WaitForAllTasksDone() {
   /*
    *
@@ -141,6 +175,8 @@ void ThreadPool::WaitForAllTasksDone() {
   con_var_all_tasks_done_.wait(lock,[this](){
     return (active_tasks_.load() == 0 && has_run_flag_.load());
   });
+  stop_flag_ = true;
+
 
 
 }
@@ -153,7 +189,6 @@ void ThreadPool::ExecuteTask(shared_ptr<Task<void>>& task) {
      *
      *
      * */
-  active_tasks_.fetch_add(1);
   (*task)();
   has_run_flag_ = true;
   active_tasks_.fetch_sub(1);

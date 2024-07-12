@@ -10,5 +10,6 @@ add_executable(testConcurrence main.cpp
         MyTask.h
         stdafx.h
         Task.h
-        SafePriorityQueue.h)
+        SafePriorityQueue.h
+        SafeQueue.h)
 target_precompile_headers(testConcurrence PRIVATE stdafx.h)

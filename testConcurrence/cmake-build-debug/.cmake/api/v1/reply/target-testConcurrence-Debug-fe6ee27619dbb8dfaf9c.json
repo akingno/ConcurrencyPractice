@@ -34,7 +34,7 @@
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 15,
+				"line" : 14,
 				"parent" : 0
 			}
 		]
@@ -151,15 +151,14 @@
 				4,
 				5,
 				6,
-				7,
-				8
+				7
 			]
 		},
 		{
 			"name" : "Precompile Header File",
 			"sourceIndexes" : 
 			[
-				9
+				8
 			]
 		}
 	],
@@ -187,11 +186,6 @@
 			"compileGroupIndex" : 1,
 			"path" : "ThreadPool.cpp",
 			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 1,
-			"path" : "Globals.h",
-			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 1,

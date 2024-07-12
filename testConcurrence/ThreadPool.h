@@ -8,44 +8,50 @@
 #include <condition_variable>
 #include <iostream>
 #include <memory>
-#include <queue>
+#include "SafePriorityQueue.h"
 #include <thread>
 #include <vector>
 
 class ThreadPool : std::enable_shared_from_this<ThreadPool>{
+ public:
+
+  using TaskSafePriorityQueue = SafeContainers::SafePriorityQueue<std::shared_ptr<Task<void>>>;
+
+  ThreadPool() = delete;
+  explicit ThreadPool(int thread_num);
+  ~ThreadPool();
+
+  ThreadPool(const ThreadPool&) = delete;
+  ThreadPool(ThreadPool&&) noexcept = delete;
+
+  void operator=(const ThreadPool&) = delete;
+  ThreadPool& operator=(ThreadPool&&) noexcept = delete;
+
+  void EnqueueTask(std::shared_ptr<Task<void>>& task);
+  void WaitForAllTasksDone();
 
 
-  std::vector<std::thread>                          m_threads;
-  std::condition_variable                           con_var_task;
+ private:
 
-
-  std::priority_queue<std::shared_ptr<Task<void>>>  pq_taskPriorityQueue;
-  std::mutex                                        mtx_queueMutex;
-
-  std::condition_variable                           con_var_all_tasks_done;
-  std::mutex                                        mutex_all_tasks_done;
-  std::atomic<int>                                  active_tasks = 0;
-  std::atomic<bool>                                 b_hasRun;
-
-  bool                                              b_stopFlag;
-  void Init(int);
+  void Init(int thread_num);
   void Run();
   void Stop();
+  void ExecuteTask(std::shared_ptr<Task<void>>& task);
+  bool PopTask(std::shared_ptr<Task<void>>& task);
 
+  std::vector<std::thread>                          threads_;
+  std::condition_variable                           con_var_task_sig_;
 
-  public:
-   ThreadPool() = delete;
-   explicit ThreadPool(int);
-   ~ThreadPool();
+  TaskSafePriorityQueue                             task_priorityQueue_;
+  std::mutex                                        queue_mutex_;
 
-   ThreadPool(const ThreadPool&) = delete;
-   ThreadPool(ThreadPool&&) noexcept = delete;
+  std::condition_variable                           con_var_all_tasks_done_;
+  std::mutex                                        all_tasks_done_mutex_;
+  std::atomic<int>                                  active_tasks_ = 0;
+  std::atomic<bool>                                 has_run_flag_;
 
-   void operator=(const ThreadPool&) = delete;
-   ThreadPool& operator=(ThreadPool&&) noexcept = delete;
+  std::atomic<bool>                                 stop_flag_;
 
-   void EnqueueTask(std::shared_ptr<Task<void>>& );
-   void WaitForAllTasksDone();
 
 };
 #endif//TESTCONCURRENCE__THREADPOOL_H_

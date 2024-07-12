@@ -13,8 +13,8 @@
 
 template<typename ResultType>
 class Task{
-  std::function<ResultType()> f_func;
-  int i_priority; // used for priority queue
+  std::function<ResultType()>     f_func;
+  int                             i_priority; // used for priority queue
  public:
 
   Task() = delete;
@@ -28,23 +28,21 @@ class Task{
    *
    * */
   Task(std::function<ResultType()> &&f, int priority) = delete;
-
   Task(const Task&) = delete;
   Task(Task && t) = delete;
 
+  void operator=(const Task&) = delete;
 
-
-  template<typename... Args>
-  auto execute(Args&&... args){
-    return f_func(args...);
+  void operator()(){
+    f_func();
   }
 
-  void operator=(const Task&) = delete;
   Task& operator=(Task&& t) noexcept{
     f_func = std::move(t.f_func);
     i_priority = t.i_priority;
     return *this;
   }
+
 
   bool operator<(const Task& other) const{
     return i_priority < other.i_priority;
@@ -52,9 +50,12 @@ class Task{
   bool operator==(const Task& other) const{
     return i_priority == other.i_priority;
   }
+
+
   int getPriority() const {
     return i_priority;
   }
+
 };
 
 

@@ -1,5 +1,5 @@
 
-#include "Globals.h"
+
 #include "MyTask.h"
 #include "Task.h"
 #include "ThreadPool.h"
@@ -10,19 +10,21 @@ using namespace std;
 
 
 
-auto SplitRange(const int low,const int high) {
+auto SplitRange(const int low,const int high,int num_threads) {
   /*
    * 把求和范围切割成 2 * threads 份
    * */
-  int subRangeLength = ((high - low) + 1) / (2 * Globals::NUM_THREADS);
-  auto subRange = make_shared<vector<pair<int,int>>>();
+  int subRangeLength = ((high - low) + 1) / (2 * num_threads);
+
+  auto subRange = vector<pair<int,int>>{};
+
   for(int i = low; i < high;){
     if(i + subRangeLength <= high){
-      subRange->emplace_back(i,i+subRangeLength-1);
+      subRange.emplace_back(i,i+subRangeLength-1);
       i += subRangeLength;
     }
     else{
-      subRange->emplace_back(i,high);
+      subRange.emplace_back(i,high);
       break;
     }
   }
@@ -63,6 +65,7 @@ tuple<int, int> LoadInput(){
  *
  * */
 int main() {
+  int NUM_THREADS = 4;
 
   atomic<long long> Sum =0;
 
@@ -79,54 +82,40 @@ int main() {
    * subRange中，[lowest, highest]
    *
    * */
-  auto subRange = SplitRange(low, high);
-
-
-  /*
-   *
-   * taskAccumulate 把一个求和函数封进lambda
-   *
-   *
-   *
-   * */
-
-  auto taskAccumulate = [](pair<int,int> range, atomic<long long>& Sum){
-    long long sum = 0;
-    for (int i = range.first; i <= range.second; ++i){
-      if(Is_prime(i)){
-        sum+=i;
-        //cout<<","<<i;
-      }
-    }
-
-    Sum += sum;
-  };
-
+  auto subRange = SplitRange(low, high, NUM_THREADS);
 
   /*
    *
    * 创建线程池
    *
    * */
-  auto threadPool = make_unique<ThreadPool>(Globals::NUM_THREADS);
+  auto threadPool = make_unique<ThreadPool>(NUM_THREADS);
 
   /*
    *
    * 把分割好的范围一段段和 taskFunction组合好，并放入taskqueue
    *
    * */
-  for(auto subrange : *subRange) {
+  for(auto subrange : subRange) {
 
     /*
      * 把taskAccumulate函数和其参数
      * 封装进std::function
      *
      * */
-    auto packagedTaskAccumulate = std::function<void()>([=, &Sum](){
-      taskAccumulate(subrange, Sum);
+    auto functionTaskAccumulate = std::function<void()>([=, &Sum](){
+      long long sum = 0;
+      for (int i = subrange.first; i <= subrange.second; ++i){
+        if(Is_prime(i)){
+          sum+=i;
+          //cout<<","<<i;
+        }
+      }
+
+      Sum += sum;
     });
 
-    auto task = make_shared<Task<void>>(packagedTaskAccumulate,0);
+    auto task = make_shared<Task<void>>(functionTaskAccumulate,0);
     threadPool->EnqueueTask(task);
 
   }

@@ -5,7 +5,7 @@
 #include "ThreadPool.h"
 #include <mutex>
 using namespace std;
-ThreadPool::ThreadPool(int num_threads) :b_stopFlag(false), b_hasRun(false){
+ThreadPool::ThreadPool(int num_threads) : stop_flag_(false), has_run_flag_(false){
   Init(num_threads);
 }
 ThreadPool::~ThreadPool() {
@@ -26,19 +26,19 @@ void ThreadPool::Stop() {
    * */
 
   {
-    std::lock_guard<std::mutex> lock(mtx_queueMutex);
-    b_stopFlag = true;
+    std::lock_guard<std::mutex> lock(queue_mutex_);
+    stop_flag_ = true;
   }
 
-  con_var_task.notify_all();
+  con_var_task_sig_.notify_all();
 
-  for(auto& thd:m_threads){
+  for(auto& thd: threads_){
     if(thd.joinable()){
       thd.join();
     }
   }
 
-  m_threads.clear();
+  threads_.clear();
   //cout<<"clean over"<<endl;
 
 
@@ -47,16 +47,15 @@ void ThreadPool::Stop() {
 void ThreadPool::EnqueueTask(shared_ptr<Task<void>>& task) {
   /*
    *
-   * 1. 上锁，将task放入taskqueue
+   * 1. 将task放入taskqueue
    * 2. 用con_var通知一个线程
    *
    * */
-  {
-    std::lock_guard<std::mutex> lock(mtx_queueMutex);
-    pq_taskPriorityQueue.push(task);
-    //cout<<"taskPQ size:"<<pq_taskPriorityQueue.size()<<endl;
-  }
-  con_var_task.notify_one();
+
+  task_priorityQueue_.push(task);
+  //cout<<"taskPQ size:"<<pq_taskPriorityQueue.size()<<endl;
+
+  con_var_task_sig_.notify_one();
 
 }
 
@@ -68,7 +67,7 @@ void ThreadPool::Init(int num_threads) {
    *
    * */
   for(int i = 0; i < num_threads; ++i){
-    m_threads.emplace_back(&ThreadPool::Run,this);
+    threads_.emplace_back(&ThreadPool::Run,this);
   }
 
   //AddingThreads(num_threads);
@@ -80,59 +79,46 @@ void ThreadPool::Run() {
 
     shared_ptr<Task<void>> task;
     {
-      unique_lock<mutex> lock(mtx_queueMutex);
-
+      unique_lock<mutex> lock(queue_mutex_);
       /*
        *
        * 如果taskqueue有任务或者已经结束了就解锁
        *
        * */
-      con_var_task.wait(lock,[this](){
-        return (!pq_taskPriorityQueue.empty() || b_stopFlag);
+      con_var_task_sig_.wait(lock, [this]() {
+        return (!task_priorityQueue_.empty() || stop_flag_.load());
       });
-
-      /*
-       *
-       * 如果已经结束了而且taskqueue空了则返回
-       *
-       * */
-      if(pq_taskPriorityQueue.empty() && b_stopFlag){
-        return;
-      }
-      /*
-       *
-       * 如果taskqueue有task则取出执行
-       *
-       * */
-      if (!pq_taskPriorityQueue.empty()) {
-        task = pq_taskPriorityQueue.top();
-        pq_taskPriorityQueue.pop();
-        active_tasks.fetch_add(1);
-      } else {
-        continue;
-      }
     }
 
     /*
      *
-     * task执行
-     * 此处可以带参数，本例不用
-     *
+     * 如果已经结束了则返回
      *
      * */
-    task->execute();
-    b_hasRun = true;
-    active_tasks.fetch_sub(1);
+    if(stop_flag_.load()){
+      return;
+    }
+
+    /*
+     *
+     * 从safe task PQ中取task，没取到继续下个循环，然后卡住
+     *
+     * */
+    if(!PopTask(task)){
+      continue;
+    }
+
+    ExecuteTask(task);
 
     /*
      *
      * 执行完，如果此时没有任何task执行，通知main进入下一步
      *
      * */
-    if (active_tasks.load() == 0) {
-      std::lock_guard<std::mutex> lock(mutex_all_tasks_done);
-      con_var_all_tasks_done.notify_one();
-    }
+      if (active_tasks_.load() == 0) {
+        std::lock_guard<std::mutex> lock(all_tasks_done_mutex_);
+        con_var_all_tasks_done_.notify_one();
+      }
 
   }
 }
@@ -143,10 +129,39 @@ void ThreadPool::WaitForAllTasksDone() {
    * 这个函数会一直等待，直到所有tasks都执行完，再进行下一步
    *
    * */
-  unique_lock<mutex> lock(mutex_all_tasks_done);
-  con_var_all_tasks_done.wait(lock,[this](){
-    return (active_tasks.load() == 0 && b_hasRun.load());
+  unique_lock<mutex> lock(all_tasks_done_mutex_);
+  con_var_all_tasks_done_.wait(lock,[this](){
+    return (active_tasks_.load() == 0 && has_run_flag_.load());
   });
 
 
+}
+
+void ThreadPool::ExecuteTask(shared_ptr<Task<void>>& task) {
+  /*
+     *
+     * task执行
+     * 此处可以带参数，本例不用
+     *
+     *
+     * */
+  active_tasks_.fetch_add(1);
+  (*task)();
+  has_run_flag_ = true;
+  active_tasks_.fetch_sub(1);
+}
+
+
+bool ThreadPool::PopTask(shared_ptr<Task<void>>& task) {
+  /*
+       *
+       * 如果taskqueue有task则取出执行
+       *
+       * */
+  if (!task_priorityQueue_.empty()) {
+    task_priorityQueue_.pop(task);
+    return true;
+  } else {
+    return false;
+  }
 }

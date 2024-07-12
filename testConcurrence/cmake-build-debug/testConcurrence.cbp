@@ -92,10 +92,10 @@
 		<Unit filename="C:/Users/jacob/Desktop/temp2/ConcurrencyPractice/testConcurrence/Task.h">
 			<Option target="testConcurrence"/>
 		</Unit>
-		<Unit filename="C:/Users/jacob/Desktop/temp2/ConcurrencyPractice/testConcurrence/ThreadPool.cpp">
+		<Unit filename="C:/Users/jacob/Desktop/temp2/ConcurrencyPractice/testConcurrence/ThreadPool.h">
 			<Option target="testConcurrence"/>
 		</Unit>
-		<Unit filename="C:/Users/jacob/Desktop/temp2/ConcurrencyPractice/testConcurrence/ThreadPool.h">
+		<Unit filename="C:/Users/jacob/Desktop/temp2/ConcurrencyPractice/testConcurrence/ThreadPoolImplement.h">
 			<Option target="testConcurrence"/>
 		</Unit>
 		<Unit filename="C:/Users/jacob/Desktop/temp2/ConcurrencyPractice/testConcurrence/cmake-build-debug/CMakeFiles/testConcurrence.dir/cmake_pch.hxx">

@@ -9,5 +9,5 @@ CMake Deprecation Warning:
 
 
 -- Configuring done (0.2s)
--- Generating done (0.2s)
+-- Generating done (0.1s)
 -- Build files have been written to: C:/Users/jacob/Desktop/temp2/ConcurrencyPractice/testConcurrence/cmake-build-debug

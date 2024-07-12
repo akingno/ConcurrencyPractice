@@ -95,7 +95,7 @@ int main() {
    * 创建线程池
    *
    * */
-  auto threadPool = ThreadPool::CreateThreadPool(NUM_THREADS);
+  auto threadPool = ThreadPool<long long>::CreateThreadPool(NUM_THREADS);
 
 
   /*

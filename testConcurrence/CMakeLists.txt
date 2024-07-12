@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(testConcurrence main.cpp
         ThreadPool.h
-        ThreadPool.cpp
+        ThreadPoolImplement.h
         MyTask.h
         stdafx.h
         Task.h

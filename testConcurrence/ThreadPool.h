@@ -13,7 +13,8 @@
 #include <thread>
 #include <vector>
 
-class ThreadPool : std::enable_shared_from_this<ThreadPool>{
+template <typename T>
+class ThreadPool : std::enable_shared_from_this<ThreadPool<T>>{
  public:
   static std::shared_ptr<ThreadPool> CreateThreadPool(int thread_num);
 
@@ -30,7 +31,7 @@ class ThreadPool : std::enable_shared_from_this<ThreadPool>{
 
   void EnqueueTask(std::shared_ptr<Task<void>>& task);
 
-  void EnqueueResult(long long int result);
+  void EnqueueResult(T result);
 
   void WaitForAllTasksDone();
 
@@ -63,10 +64,12 @@ class ThreadPool : std::enable_shared_from_this<ThreadPool>{
 
   std::jthread                                      calculate_thread_;
 
-  SafeContainers::SafeQueue<long long>              result_queue_;
+  SafeContainers::SafeQueue<T>                      result_queue_;
   std::mutex                                        calculate_result_mutex_;
   std::condition_variable                           con_var_calculate_results_;
 
 
+
 };
+#include "ThreadPoolImplement.h"  // 包含实现的模板定义
 #endif//TESTCONCURRENCE__THREADPOOL_H_

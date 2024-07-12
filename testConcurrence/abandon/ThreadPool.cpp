@@ -2,13 +2,17 @@
 // Created by jacob on 2024/7/9.
 //
 
-#include "ThreadPool.h"
+
 #include <mutex>
 using namespace std;
-ThreadPool::ThreadPool() : stop_flag_(false), has_run_flag_(false){
+
+template<typename T>
+ThreadPool<T>::ThreadPool() : stop_flag_(false), has_run_flag_(false){
 
 }
-ThreadPool::~ThreadPool() {
+
+template<typename T>
+ThreadPool<T>::~ThreadPool() {
   /*
    *
    * 停止：删除所有thread
@@ -17,13 +21,14 @@ ThreadPool::~ThreadPool() {
   Stop();
 }
 
-
-void ThreadPool::EnqueueResult(long long result){
+template<typename T>
+void ThreadPool<T>::EnqueueResult(T result){
   result_queue_.enqueue(result);
   con_var_calculate_results_.notify_all();
 }
 
-std::shared_ptr<ThreadPool> ThreadPool::CreateThreadPool(int thread_num) {
+template<typename T>
+std::shared_ptr<ThreadPool<T>> ThreadPool<T>::CreateThreadPool(int thread_num) {
   auto ptr = make_shared<ThreadPool>();
   ptr->CreateThreads(thread_num);
   ptr->CreateAccumulateThread();
@@ -31,17 +36,19 @@ std::shared_ptr<ThreadPool> ThreadPool::CreateThreadPool(int thread_num) {
   return ptr;
 
 }
-void ThreadPool::CreateAccumulateThread(){
+template<typename T>
+void ThreadPool<T>::CreateAccumulateThread(){
   calculate_thread_ = jthread(&ThreadPool::Accumulate,this);
 
 
 }
 
-void ThreadPool::Accumulate() {
+template<typename T>
+void ThreadPool<T>::Accumulate() {
   cout<<"Accumulate thread begin"<<endl;
-  long long sum = 0;
+  T sum = 0;
   do{
-    long long value = 0;
+    T value = 0;
     while (result_queue_.dequeue(value)) {
       //cout<<value<<","<<endl;
       sum += value;
@@ -52,7 +59,8 @@ void ThreadPool::Accumulate() {
   cout<<"Sum By Accumulator:"<<sum<<endl;
 }
 
-void ThreadPool::Stop() {
+template<typename T>
+void ThreadPool<T>::Stop() {
   /*
    *
    * 所有thread，能join都join
@@ -81,7 +89,8 @@ void ThreadPool::Stop() {
 
 }
 
-void ThreadPool::EnqueueTask(shared_ptr<Task<void>>& task) {
+template<typename T>
+void ThreadPool<T>::EnqueueTask(shared_ptr<Task<void>>& task) {
   /*
    *
    * 1. 将task放入taskqueue
@@ -98,8 +107,8 @@ void ThreadPool::EnqueueTask(shared_ptr<Task<void>>& task) {
 }
 
 
-
-void ThreadPool::CreateThreads(int num_threads) {
+template<typename T>
+void ThreadPool<T>::CreateThreads(int num_threads) {
   /*
    * 初始化，Adding threads
    *
@@ -111,8 +120,8 @@ void ThreadPool::CreateThreads(int num_threads) {
   //AddingThreads(num_threads);
 }
 
-
-void ThreadPool::Run() {
+template<typename T>
+void ThreadPool<T>::Run() {
   while(!stop_flag_){
 
     shared_ptr<Task<void>> task;
@@ -163,8 +172,8 @@ void ThreadPool::Run() {
   }
 }
 
-
-void ThreadPool::WaitForAllTasksDone() {
+template<typename T>
+void ThreadPool<T>::WaitForAllTasksDone() {
   /*
    *
    * main在新建完task后会开始执行这个函数
@@ -181,7 +190,8 @@ void ThreadPool::WaitForAllTasksDone() {
 
 }
 
-void ThreadPool::ExecuteTask(shared_ptr<Task<void>>& task) {
+template<typename T>
+void ThreadPool<T>::ExecuteTask(shared_ptr<Task<void>>& task) {
   /*
      *
      * task执行
@@ -194,8 +204,8 @@ void ThreadPool::ExecuteTask(shared_ptr<Task<void>>& task) {
   active_tasks_.fetch_sub(1);
 }
 
-
-bool ThreadPool::PopTask(shared_ptr<Task<void>>& task) {
+template<typename T>
+bool ThreadPool<T>::PopTask(shared_ptr<Task<void>>& task) {
   /*
        *
        * 如果taskqueue有task则取出执行
